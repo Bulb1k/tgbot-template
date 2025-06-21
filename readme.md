@@ -28,7 +28,7 @@ bot/
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo>
+   git clone https://github.com/Bulb1k/tgbot-template.git
    cd telegram-bot-template
    ```
 
