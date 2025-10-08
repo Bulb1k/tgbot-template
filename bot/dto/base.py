@@ -1,9 +1,4 @@
-from pydantic import BaseModel, Field
-from typing import Optional
-from abc import ABC, abstractmethod
-import aiohttp
-import json
-from data.config import API_BACKEND_URL, API_BACKEND_KEY
+from pydantic import BaseModel
 
 
 class BaseDto(BaseModel):

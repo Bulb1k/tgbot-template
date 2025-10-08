@@ -1,9 +1,8 @@
-from typing import Optional, List
+from typing import Any
 
-from dto import BaseDto
+from dto.base import BaseDto
 
 
 class ApiResponse(BaseDto):
     status: int
-    data: List[BaseDto] | BaseDto = None
-    message: str | None = None
+    data: Any | None = None
