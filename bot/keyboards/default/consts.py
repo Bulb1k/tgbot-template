@@ -1,7 +1,7 @@
-from typing import Sequence, Dict
-
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, KeyboardButtonPollType
-
+from typing import Sequence, Dict, Union
+from aiogram.types import KeyboardButtonPollType
+from aiogram_i18n import LazyProxy
+from aiogram_i18n.types import ReplyKeyboardMarkup, KeyboardButton
 from ..keyboard_utils import schema_generator
 
 
@@ -10,7 +10,10 @@ class DefaultConstructor:
         "contact": "request_contact",
         "location": "request_location",
         "poll": "request_poll",
-        "web": "web_app"
+        "web": "web_app",
+        "users": "request_users",
+        "chat": "request_chat",
+        "emoji": "icon_custom_emoji_id",
     }
 
     available_properties = [
@@ -18,16 +21,16 @@ class DefaultConstructor:
         "request_contact",
         "request_location",
         "request_poll",
-        "request_user",
+        "request_users",
         "request_chat",
         "web_app",
+        "icon_custom_emoji_id",
+        "style",                
     ]
-
-    properties_amount = 1
 
     @staticmethod
     def create_kb(
-            actions: Sequence[str | Dict[str, str | bool | KeyboardButtonPollType]],
+            actions: Sequence[str | LazyProxy | Dict[str, str | bool | KeyboardButtonPollType | LazyProxy]],
             schema: Sequence[int],
             resize_keyboard: bool = True,
             selective: bool = False,
@@ -37,12 +40,11 @@ class DefaultConstructor:
         buttons: list[KeyboardButton] = []
 
         for a in actions:
-            if isinstance(a, str):
+            if isinstance(a, (str, LazyProxy)):
                 a = {"text": a}
 
-            data: Dict[str, str | bool | KeyboardButtonPollType] = {}
+            data: Dict[str, str | bool | KeyboardButtonPollType | LazyProxy] = {}
 
-            # Replace aliases
             for k, v in DefaultConstructor.aliases.items():
                 if k in a:
                     a[v] = a[k]
@@ -50,13 +52,11 @@ class DefaultConstructor:
 
             for k in a:
                 if k in DefaultConstructor.available_properties:
-                    if len(data) <= DefaultConstructor.properties_amount:
-                        data[k] = a[k]
-                    else:
-                        break
+                    data[k] = a[k]
 
-            if len(data) < DefaultConstructor.properties_amount:
-                raise ValueError("Недостаточно данных для создания кнопки")
+            # Перевірка обов'язкового поля
+            if "text" not in data:
+                raise ValueError("Кнопка повинна мати поле 'text'")
 
             buttons.append(KeyboardButton(**data))
 
@@ -67,5 +67,4 @@ class DefaultConstructor:
             selective=selective,
             keyboard=schema_generator.create_keyboard_layout(buttons, schema)
         )
-
         return kb
