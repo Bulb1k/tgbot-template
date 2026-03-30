@@ -1,10 +1,11 @@
 from typing import Type, TypeVar
 
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import (
+from aiogram.types import LoginUrl
+from aiogram_i18n import LazyProxy
+from aiogram_i18n.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    LoginUrl,
 )
 
 from ..keyboard_utils import schema_generator
@@ -24,21 +25,20 @@ class InlineConstructor:
         "switch_inline_query_current_chat",
         "callback_game",
         "pay",
-        "web_app"
+        "web_app",
+        "icon_custom_emoji_id",
+        "style",
     ]
-    properties_amount = 2
 
     @staticmethod
     def create_kb(
-            actions: list[
-                dict[str, str | bool | A | LoginUrl]
-            ],
+            actions: list[dict[str, str | bool | A | LoginUrl | LazyProxy]],
             schema: list[int],
     ) -> InlineKeyboardMarkup:
         buttons: list[InlineKeyboardButton] = []
 
         for a in actions:
-            data: dict[str, str | bool | A | LoginUrl] = {}
+            data: dict[str, str | bool | A | LoginUrl | LazyProxy] = {}
 
             for k, v in InlineConstructor.aliases.items():
                 if k in a:
@@ -47,17 +47,22 @@ class InlineConstructor:
 
             for k in a:
                 if k in InlineConstructor.available_properties:
-                    if len(data) <= InlineConstructor.properties_amount:
-                        data[k] = a[k]
-                    else:
-                        break
+                    data[k] = a[k]
+
+            if "text" not in data:
+                raise ValueError("Кнопка повинна мати поле 'text'")
+
+            has_action = any(k in data for k in [
+                "callback_data", "url", "login_url",
+                "switch_inline_query", "switch_inline_query_current_chat",
+                "callback_game", "pay", "web_app"
+            ])
+            if not has_action:
+                raise ValueError("Кнопка повинна мати хоча б одну дію (callback_data, url, тощо)")
 
             if "callback_data" in data:
                 if isinstance(data["callback_data"], CallbackData):
                     data["callback_data"] = data["callback_data"].pack()
-
-            if len(data) != InlineConstructor.properties_amount:
-                raise ValueError("Недостаточно данных для создания кнопки")
 
             buttons.append(InlineKeyboardButton(**data))
 
